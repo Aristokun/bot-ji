@@ -8,44 +8,36 @@ item_order = ['hand', 'finger_left', 'ear_left', 'neck', 'bracelet', 'belt','glo
 font_new = "/bot2.0/TaipeiSansTCBeta-Bold.ttf"
 png_name = ""
 proxies = {'http':'http://127.0.0.1:24458'}
-# 从API获取JSON数据
 def get_json_from_api(url):
     response = requests.get(url,proxies=proxies)
     return response.json()
 
-# 下载图片并保存到指定路径
 def download_image(url, file_path):
     response = requests.get(url,proxies=proxies)
     with open(file_path, 'wb') as f:
         f.write(response.content)
 
-# 创建图片并将其与已有图片合并
 def create_image(icon_file_path, name, output_file_path):
-    global current_y  # 使用全局变量current_y来记录当前图片的垂直位置
-    icon = Image.open(icon_file_path)  # 打开装备图标文件
-    width, height = icon.size  # 获取装备图标的宽度和高度
+    global current_y  
+    icon = Image.open(icon_file_path)  
+    width, height = icon.size  
     new_width = width + 600  # 新图片的宽度为装备图标宽度加200
     new_height = height  # 新图片的高度与装备图标高度相同
 
-    # 检查输出文件是否已存在，如果存在则打开它，否则创建一个新的空白图片
     if os.path.exists(output_file_path):
         new_image = Image.open(output_file_path)
     else:
         new_image = Image.new('RGB', (new_width, new_height * len(item_order)), color='white')
 
-    # 将装备图标粘贴到新图片的当前垂直位置（current_y）
     new_image.paste(icon, (0, current_y))
     draw = ImageDraw.Draw(new_image)  # 创建一个绘图对象以在新图片上绘制文本
-    # 加载字体文件，设置字体大小为20
     font = ImageFont.truetype(font_new, 20)
-    # 在新图片上绘制装备名称，位置为装备图标右侧，垂直居中
     draw.text((width + 10, current_y + height // 2 - 30), name, font=font, fill='black')
     new_image.save(output_file_path, quality=95)  # 保存新图片到指定的输出文件路径，使用高质量压缩设置
-    current_y += new_height  # 更新current_y以便下一个装备图标粘贴到正确的位置
+    current_y += new_height  #
 
 
 
-# 提取物品名称和图标文件名
 def print_items(data, key1='detail', key2='item', key3='name', key4='icon'):
     if isinstance(data, dict):
         for k, v in data.items():
@@ -57,7 +49,6 @@ def print_items(data, key1='detail', key2='item', key3='name', key4='icon'):
                             icon_file_name = icon_url.split('/')[-1]
                             return (f'{v[key2][key3]}', icon_file_name)
 
-# 创建合并后的图片
 def create_combined_image(item_name, icon_file_name, icon_url):
     global current_y
     icon_folder = 'icon'
@@ -68,7 +59,6 @@ def create_combined_image(item_name, icon_file_name, icon_url):
     output_file_path = os.path.join(png_name)
     create_image(icon_file_path, item_name, output_file_path)
 
-# 创建宝石图片并将其与已有图片合并
 def create_gem_image(icon_file_path, output_file_path, x_offset, y_offset):
     icon = Image.open(icon_file_path)
     width, height = icon.size
@@ -84,7 +74,6 @@ def create_gem_image(icon_file_path, output_file_path, x_offset, y_offset):
     new_image.save(output_file_path)
     return width  # 返回缩放后的宝石图标的宽度
 
-# 处理宝石并将其添加到图片中
 def process_gems(item, json_data, gem_x_offset, gem_y_offset):
     for gem in json_data[item]['detail']['added_gems']:
         gem_icon_url = gem['icon']
@@ -98,7 +87,6 @@ def process_gems(item, json_data, gem_x_offset, gem_y_offset):
             gem_width = create_gem_image(gem_icon_file_path, png_name, gem_x_offset, gem_y_offset)
             gem_x_offset += gem_width  # 使用缩放后的宝石图标的宽度
         else:
-            # 处理 gem_icon_url 为 None 的情况，例如设置一个默认值或跳过这个宝石
             pass
     return gem_x_offset
 
